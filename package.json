@@ -1,0 +1,16 @@
+{
+  "name": "antigravity-font-patcher",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Patch Antigravity app.asar to inject a custom global UI font.",
+  "bin": {
+    "patch-antigravity-font": "./patch-antigravity-font.js"
+  },
+  "scripts": {
+    "patch": "node patch-antigravity-font.js",
+    "check": "node --check patch-antigravity-font.js"
+  },
+  "dependencies": {
+    "@electron/asar": "^3.4.1"
+  }
+}
