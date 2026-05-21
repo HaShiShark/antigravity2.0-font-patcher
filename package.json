@@ -8,9 +8,13 @@
   },
   "scripts": {
     "patch": "node patch-antigravity-font.js",
-    "check": "node --check patch-antigravity-font.js"
+    "check": "node --check patch-antigravity-font.js",
+    "build:win": "pkg patch-antigravity-font.js --targets node18-win-x64 --output dist/antigravity-font-patcher.exe"
   },
   "dependencies": {
     "@electron/asar": "^3.4.1"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
   }
 }

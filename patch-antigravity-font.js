@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const readline = require('readline');
 
 const DEFAULT_INSTALL_DIR = path.join(
   os.homedir(),
@@ -27,6 +28,7 @@ Options:
   --fallback <list>      Extra CSS font fallback list. Default: "Source Han Serif SC", "Noto Serif CJK SC", serif
   --install-dir <path>   Antigravity install directory. Default: ${DEFAULT_INSTALL_DIR}
   --restore              Restore the newest app.asar.bak-* backup.
+  --interactive          Prompt for options in the terminal.
   --keep-temp            Keep extracted temporary files for debugging.
   --no-process-check     Do not check whether Antigravity is running.
   --help                 Show this help.
@@ -39,6 +41,7 @@ function parseArgs(argv) {
     fallback: '"Source Han Serif SC", "Noto Serif CJK SC", serif',
     keepTemp: false,
     restore: false,
+    interactive: argv.length === 0,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -48,6 +51,7 @@ function parseArgs(argv) {
     else if (arg === '--fallback') args.fallback = argv[++i];
     else if (arg === '--install-dir') args.installDir = argv[++i];
     else if (arg === '--restore') args.restore = true;
+    else if (arg === '--interactive') args.interactive = true;
     else if (arg === '--keep-temp') args.keepTemp = true;
     else if (arg === '--no-process-check') args.noProcessCheck = true;
     else throw new Error(`Unknown option: ${arg}`);
@@ -102,6 +106,39 @@ async function packAsar(tempDir, appAsar) {
     if (error.code !== 'MODULE_NOT_FOUND') throw error;
     run('npx', ['--yes', '@electron/asar', 'pack', tempDir, appAsar]);
   }
+}
+
+function ask(question) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+async function waitForEnter() {
+  await ask('\nPress Enter to exit...');
+}
+
+async function fillInteractiveArgs(args) {
+  console.log('Antigravity 2.0 Font Patcher');
+  console.log(`Install dir: ${args.installDir}`);
+  console.log('Close Antigravity before continuing.\n');
+
+  const action = await ask('Choose action: [1] Patch font  [2] Restore backup  (default: 1): ');
+  if (action === '2') {
+    args.restore = true;
+    return args;
+  }
+
+  const font = await ask('Font name (default: 思源宋体): ');
+  args.font = font || '思源宋体';
+  return args;
 }
 
 function cssString(value) {
@@ -219,17 +256,22 @@ function escapeRegExp(value) {
 }
 
 async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  let shouldPause = args.interactive;
+
   try {
-    const args = parseArgs(process.argv.slice(2));
     if (args.help) {
       usage();
       return;
     }
+    if (args.interactive) await fillInteractiveArgs(args);
     if (args.restore) restoreBackup(args.installDir, args.noProcessCheck);
     else await patchApp(args);
   } catch (error) {
     console.error(`Error: ${error.message}`);
-    process.exit(1);
+    if (!shouldPause) process.exit(1);
+  } finally {
+    if (shouldPause) await waitForEnter();
   }
 }
 

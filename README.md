@@ -6,6 +6,14 @@
 
 ## 使用方法
 
+### exe 版本
+
+下载 Release 里的 `antigravity-font-patcher.exe`，双击运行，按提示输入字体名称即可。
+
+默认字体是：`思源宋体`。
+
+### 源码运行
+
 先关闭 Antigravity，然后运行：
 
 ```bash
@@ -34,6 +42,7 @@ node patch-antigravity-font.js --restore
 --fallback <list>      CSS 字体 fallback 列表
 --install-dir <path>   Antigravity 安装目录
 --restore              恢复最近的 app.asar.bak-* 备份
+--interactive          交互式输入字体或恢复备份
 --keep-temp            保留临时解包目录，方便调试
 --no-process-check     跳过 Antigravity 运行状态检查
 ```
